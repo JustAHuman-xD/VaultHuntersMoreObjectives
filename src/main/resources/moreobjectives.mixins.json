@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "lv.id.bonne.vaulthunters.moreobjectives.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "moreobjectives.refmap.json",
+  "mixins": [
+    "MixinCowBaseSpawnerTileEntity",
+    "MixinCowSpawnerAction",
+    "MixinCowVault"
+  ]
+}
