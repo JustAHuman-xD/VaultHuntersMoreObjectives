@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "moreobjectives.refmap.json",
   "mixins": [
+    "MixinCakeObjective",
     "MixinCowBaseSpawnerTileEntity",
     "MixinCowSpawnerAction",
     "MixinCowVault"

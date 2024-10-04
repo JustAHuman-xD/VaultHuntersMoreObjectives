@@ -79,7 +79,22 @@ public class Configuration
         cowVaultTrigger.add(new ModifierCounter(VaultMod.id("wild"), 5));
         cowVaultTrigger.add(new ModifierCounter(VaultMod.id("furious_mobs"), 5));
         cowVaultTrigger.add(new ModifierCounter(VaultMod.id("infuriated_mobs"), 5));
+
+
+        cakeVault = new CakeVault(0.1f,
+            List.of(new ModifierCounter(VaultMod.id("rotten"), 1),
+                new ModifierCounter(VaultMod.id("shortened"), 15)),
+            List.of(new Fruit("Sweet Kiwi", VaultMod.id("sweet_kiwi"), 200, 0.6888f),
+                new Fruit("Grapes", VaultMod.id("grapes"), 400, 0.1721f),
+                new Fruit("Bitter Lemon", VaultMod.id("bitter_lemon"), 600, 0.0767f),
+                new Fruit("Mango", VaultMod.id("mango"), 900, 0.0340f),
+                new Fruit("Sour Orange", VaultMod.id("sour_orange"), 1200, 0.0191f),
+                new Fruit("Star Fruit", VaultMod.id("star_fruit"), 1800, 0.0085f),
+                new Fruit("Mystic Pear", VaultMod.id("mystic_pear"), 6000, 0.0008f)));
     }
+
+
+
 
 
     public void writeConfig() throws IOException
@@ -183,6 +198,85 @@ public class Configuration
     }
 
 
+    public static final class CakeVault
+    {
+        public CakeVault(float chance, List<ModifierCounter> startModifiers, List<Fruit> fruits)
+        {
+            this.chance = chance;
+            this.startModifiers = startModifiers;
+            this.fruits = fruits;
+
+            fruitMap = new TreeMap<>();
+
+
+            float fc = 0;
+            for (Fruit fruit : fruits)
+            {
+                fc += fruit.chance;
+                fruitMap.put(fc, fruit);
+            }
+        }
+
+
+        public TreeMap<Float, Fruit> getFruits()
+        {
+            if (fruitMap == null)
+            {
+                fruitMap = new TreeMap<>();
+
+                float fc = 0;
+                for (Fruit fruit : fruits)
+                {
+                    fc += fruit.chance;
+                    fruitMap.put(fc, fruit);
+                }
+            }
+
+            return fruitMap;
+        }
+
+
+        @Expose
+        public float chance;
+
+        @Expose
+        public List<ModifierCounter> startModifiers;
+
+        @Expose
+        public List<Fruit> fruits;
+
+
+        private TreeMap<Float, Fruit> fruitMap;
+    }
+
+
+    public static class Fruit
+    {
+        public Fruit(String name, ResourceLocation icon, int increment, float chance)
+        {
+            this.name = name;
+            this.icon = icon;
+            this.increment = increment;
+            this.chance = chance;
+        }
+
+        @Expose
+        public String name;
+
+        @Expose
+        public ResourceLocation icon;
+
+        @Expose
+        public int increment;
+
+        @Expose
+        public float chance;
+    }
+
+
     @Expose
     private List<ModifierCounter> cowVaultTrigger;
+
+    @Expose
+    public CakeVault cakeVault;
 }
