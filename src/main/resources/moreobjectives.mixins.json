@@ -6,6 +6,7 @@
   "refmap": "moreobjectives.refmap.json",
   "mixins": [
     "MixinCakeObjective",
+    "MixinCakeTextChange",
     "MixinCowBaseSpawnerTileEntity",
     "MixinCowSpawnerAction",
     "MixinCowVault"

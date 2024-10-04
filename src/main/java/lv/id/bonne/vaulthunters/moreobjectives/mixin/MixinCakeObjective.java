@@ -36,6 +36,7 @@ import iskallia.vault.core.vault.time.modifier.ModifierExtension;
 import iskallia.vault.core.world.storage.VirtualWorld;
 import lv.id.bonne.vaulthunters.moreobjectives.MoreObjectivesMod;
 import lv.id.bonne.vaulthunters.moreobjectives.configs.Configuration;
+import lv.id.bonne.vaulthunters.moreobjectives.utils.ICakeObjectiveAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -50,7 +51,7 @@ import static iskallia.vault.core.data.ICompound.DISK;
 
 
 @Mixin(value = CakeObjective.class, remap = false)
-public abstract class MixinCakeObjective
+public abstract class MixinCakeObjective implements ICakeObjectiveAccessor
 {
     @Shadow
     @Final
@@ -61,6 +62,14 @@ public abstract class MixinCakeObjective
 
     @Unique
     private static FieldKey<String> LAST_CAKE_TYPE;
+
+
+    @Override
+    @Unique
+    public FieldKey<String> getCakeType()
+    {
+        return CAKE_TYPE;
+    }
 
 
     @Inject(method = "<clinit>", at = @At("TAIL"))
