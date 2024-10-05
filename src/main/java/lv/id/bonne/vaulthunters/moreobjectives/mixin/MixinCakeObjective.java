@@ -36,6 +36,7 @@ import iskallia.vault.core.vault.time.modifier.ModifierExtension;
 import iskallia.vault.core.world.storage.VirtualWorld;
 import lv.id.bonne.vaulthunters.moreobjectives.MoreObjectivesMod;
 import lv.id.bonne.vaulthunters.moreobjectives.configs.Configuration;
+import lv.id.bonne.vaulthunters.moreobjectives.configs.FruitCakeSettings;
 import lv.id.bonne.vaulthunters.moreobjectives.utils.ICakeObjectiveAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -91,7 +92,7 @@ public abstract class MixinCakeObjective implements ICakeObjectiveAccessor
     {
         ChunkRandom random = ChunkRandom.any();
 
-        if (MoreObjectivesMod.CONFIGURATION.cakeVault.chance > random.nextFloat())
+        if (MoreObjectivesMod.CONFIGURATION.fruitCakeSettings.getChance() > random.nextFloat())
         {
             // First cake never gives extra time.
             ((CakeObjective) (Object) this).set(CAKE_TYPE, "null");
@@ -112,13 +113,13 @@ public abstract class MixinCakeObjective implements ICakeObjectiveAccessor
 
         if (((CakeObjective) (Object) this).has(CAKE_TYPE))
         {
-            Configuration.CakeVault cakeVault = MoreObjectivesMod.CONFIGURATION.cakeVault;
+            FruitCakeSettings cakeVault = MoreObjectivesMod.CONFIGURATION.fruitCakeSettings;
 
             if (cakeVault != null)
             {
                 vault.ifPresent(Vault.MODIFIERS, modifiers ->
                 {
-                    for (Configuration.ModifierCounter startModifier : cakeVault.startModifiers)
+                    for (Configuration.ModifierCounter startModifier : cakeVault.getStartModifiers())
                     {
                         Optional<VaultModifier<?>> opt = VaultModifierRegistry.getOpt(startModifier.modifier());
 
@@ -163,12 +164,12 @@ public abstract class MixinCakeObjective implements ICakeObjectiveAccessor
         {
             String value = ((CakeObjective) (Object) this).get(LAST_CAKE_TYPE);
 
-            MoreObjectivesMod.CONFIGURATION.cakeVault.fruits.stream().
-                filter(f -> f.name.equals(value)).
+            MoreObjectivesMod.CONFIGURATION.fruitCakeSettings.getFruits().stream().
+                filter(fruit -> fruit.getName().equals(value)).
                 findAny().
                 ifPresent(fruit ->
                     vault.ifPresent(Vault.CLOCK,
-                        clock -> clock.addModifier(new ModifierExtension(fruit.increment))));
+                        clock -> clock.addModifier(new ModifierExtension(fruit.getIncrement()))));
         }
     }
 
@@ -193,22 +194,22 @@ public abstract class MixinCakeObjective implements ICakeObjectiveAccessor
         {
             ((CakeObjective) (Object) this).set(LAST_CAKE_TYPE, ((CakeObjective) (Object) this).get(CAKE_TYPE));
 
-            Map.Entry<Float, Configuration.Fruit> floatFruitEntry =
-                MoreObjectivesMod.CONFIGURATION.cakeVault.getFruits().higherEntry(random.nextFloat());
+            Map.Entry<Float, FruitCakeSettings.Fruit> floatFruitEntry =
+                MoreObjectivesMod.CONFIGURATION.fruitCakeSettings.getFruitChances().higherEntry(random.nextFloat());
 
             if (floatFruitEntry != null)
             {
-                ((CakeObjective) (Object) this).set(CAKE_TYPE, floatFruitEntry.getValue().name);
+                ((CakeObjective) (Object) this).set(CAKE_TYPE, floatFruitEntry.getValue().getName());
             }
 
-            String value = floatFruitEntry != null ? floatFruitEntry.getValue().name : "null";
+            String value = floatFruitEntry != null ? floatFruitEntry.getValue().getName() : "null";
 
-            MoreObjectivesMod.CONFIGURATION.cakeVault.fruits.stream().
-                filter(f -> f.name.equals(value)).
+            MoreObjectivesMod.CONFIGURATION.fruitCakeSettings.getFruits().stream().
+                filter(fruit -> fruit.getName().equals(value)).
                 findAny().
                 ifPresent(fruit ->
                 {
-                    Item item = ForgeRegistries.ITEMS.getValue(fruit.icon);
+                    Item item = ForgeRegistries.ITEMS.getValue(fruit.getIcon());
 
                     if (item != null)
                     {
