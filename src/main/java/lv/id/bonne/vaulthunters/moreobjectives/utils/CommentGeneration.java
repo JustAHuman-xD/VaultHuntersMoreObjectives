@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -31,7 +32,7 @@ public class CommentGeneration
         // Recursive method to process objects and their nested fields
         serializeObjectWithComments(obj, jsonWithComments, mapper, 1);
 
-        jsonWithComments.append("}");
+        jsonWithComments.append("\n}");
 
         return jsonWithComments.toString();
     }
@@ -49,6 +50,7 @@ public class CommentGeneration
         Field[] fields = clazz.getDeclaredFields();
 
         String indent = "  ".repeat(indentLevel);
+        boolean first = true;
 
         for (int i = 0; i < fields.length; i++)
         {
@@ -60,6 +62,14 @@ public class CommentGeneration
                 // Skip this field if it's marked to be ignored
                 continue;
             }
+
+            if (!first)
+            {
+                jsonWithComments.append(",");
+                jsonWithComments.append("\n");
+            }
+
+            first = false;
 
             String jsonPropertyName = field.getName();
 
@@ -86,7 +96,12 @@ public class CommentGeneration
 
             if (fieldValue != null)
             {
-                if (fieldValue instanceof Collection<?> collection)
+                if (field.isAnnotationPresent(JsonSerialize.class))
+                {
+                    // If the field is a primitive or String, serialize directly
+                    jsonWithComments.append(mapper.writeValueAsString(field.get(obj)));
+                }
+                else if (fieldValue instanceof Collection<?> collection)
                 {
                     // Handle Collection (List, Set)
                     jsonWithComments.append("[\n");
@@ -102,18 +117,11 @@ public class CommentGeneration
                 }
                 else if (isNotPrimitive(fieldValue))
                 {
-                    try
-                    {
-                        // Use ObjectMapper for custom serialization
-                        jsonWithComments.append(mapper.writeValueAsString(fieldValue));
-                    }
-                    catch (JsonProcessingException e)
-                    {
-                        // Serialize object as recursive object.
-                        jsonWithComments.append("{\n");
-                        serializeObjectWithComments(fieldValue, jsonWithComments, mapper, indentLevel + 1);
-                        jsonWithComments.append(indent).append("}");
-                    }
+                    // Serialize object as recursive object.
+                    jsonWithComments.append("{\n");
+                    serializeObjectWithComments(fieldValue, jsonWithComments, mapper, indentLevel + 1);
+                    jsonWithComments.append("\n");
+                    jsonWithComments.append(indent).append("}");
                 }
                 else
                 {
@@ -121,13 +129,6 @@ public class CommentGeneration
                     jsonWithComments.append(mapper.writeValueAsString(field.get(obj)));
                 }
             }
-
-            if (i < fields.length - 1)
-            {
-                jsonWithComments.append(",");
-            }
-
-            jsonWithComments.append("\n");
         }
     }
 
@@ -146,20 +147,24 @@ public class CommentGeneration
         for (Object item : collection)
         {
             jsonWithComments.append(indent);
+
             if (isNotPrimitive(item))
             {
                 jsonWithComments.append("{\n");
                 serializeObjectWithComments(item, jsonWithComments, mapper, indentLevel + 1);
+                jsonWithComments.append("\n");
                 jsonWithComments.append(indent).append("}");
             }
             else
             {
                 jsonWithComments.append(mapper.writeValueAsString(item));
             }
+
             if (++count < collection.size())
             {
                 jsonWithComments.append(",");
             }
+
             jsonWithComments.append("\n");
         }
     }

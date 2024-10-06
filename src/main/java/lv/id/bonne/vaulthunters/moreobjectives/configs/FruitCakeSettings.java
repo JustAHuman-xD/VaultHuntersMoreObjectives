@@ -9,11 +9,13 @@ package lv.id.bonne.vaulthunters.moreobjectives.configs;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
 import iskallia.vault.VaultMod;
+import lv.id.bonne.vaulthunters.moreobjectives.configs.adapters.ResourceLocationSerializer;
 import lv.id.bonne.vaulthunters.moreobjectives.configs.annotations.JsonComment;
 import net.minecraft.resources.ResourceLocation;
 
@@ -198,6 +200,7 @@ public class FruitCakeSettings
         private String name;
 
         @JsonProperty("icon")
+        @JsonSerialize(using = ResourceLocationSerializer.class)
         @JsonComment("The icon resource location. You can use any item in minecraft, as long as you")
         @JsonComment("provide correct resource location to it.")
         @JsonComment("The icon is spawned over cake as item to show it.")

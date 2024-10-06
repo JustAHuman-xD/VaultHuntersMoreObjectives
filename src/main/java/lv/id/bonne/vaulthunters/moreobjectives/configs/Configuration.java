@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.io.*;
 import java.nio.file.Files;
@@ -128,7 +129,7 @@ public class Configuration
 
         if (dir.exists() || dir.mkdirs())
         {
-            if (this.getConfigFile().exists() || this.getConfigFile().createNewFile())
+            if (!this.getConfigFile().exists() || this.getConfigFile().createNewFile())
             {
                 try
                 {
@@ -200,6 +201,7 @@ public class Configuration
 
 
         @JsonProperty("modifier")
+        @JsonSerialize(using = ResourceLocationSerializer.class)
         @JsonComment("The Vault Hunters modifier identifier.")
         private ResourceLocation modifier;
 
