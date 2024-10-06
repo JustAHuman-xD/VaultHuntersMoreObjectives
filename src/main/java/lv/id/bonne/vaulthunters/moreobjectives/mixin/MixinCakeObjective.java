@@ -7,16 +7,18 @@
 package lv.id.bonne.vaulthunters.moreobjectives.mixin;
 
 
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.*;
 
+import iskallia.vault.core.data.key.FieldKey;
 import iskallia.vault.core.random.ChunkRandom;
 import iskallia.vault.core.random.RandomSource;
 import iskallia.vault.core.util.RegionPos;
@@ -49,6 +51,11 @@ import net.minecraftforge.registries.ForgeRegistries;
 @Mixin(value = CakeObjective.class, remap = false)
 public abstract class MixinCakeObjective
 {
+    @Shadow
+    @Final
+    public static FieldKey<BlockPos> CAKE_POS;
+
+
     @Inject(method = "initServer", at = @At("TAIL"))
     private void injectModifiers(VirtualWorld world, Vault vault, CallbackInfo ci)
     {
@@ -143,21 +150,8 @@ public abstract class MixinCakeObjective
     }
 
 
-    @Inject(method = "generateCake",
-        at = @At(value = "INVOKE",
-            target = "Liskallia/vault/core/world/storage/VirtualWorld;setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z"),
-        locals = LocalCapture.CAPTURE_FAILHARD)
-    private void injectItemSpawning(VirtualWorld world,
-        RegionPos region,
-        RandomSource random,
-        CallbackInfo ci,
-        int minX,
-        int minZ,
-        BlockPos.MutableBlockPos pos,
-        int i,
-        int x,
-        int z,
-        int y)
+    @Inject(method = "generateCake", at = @At(value = "TAIL"))
+    private void injectItemSpawning(VirtualWorld world, RegionPos region, RandomSource random, CallbackInfo ci)
     {
         CakeDataForDimension cakeDataForDimension = CakeDataForDimension.get(world);
 
@@ -169,6 +163,11 @@ public abstract class MixinCakeObjective
             if (floatFruitEntry != null)
             {
                 cakeDataForDimension.setCakeType(floatFruitEntry.getValue().getName());
+                MoreObjectivesMod.LOGGER.debug("Next cake " + floatFruitEntry.getValue().getName());
+            }
+            else
+            {
+                MoreObjectivesMod.LOGGER.debug("Failed to get next cake. Check your fruit list.");
             }
 
             String value = floatFruitEntry != null ? floatFruitEntry.getValue().getName() : "";
@@ -182,9 +181,18 @@ public abstract class MixinCakeObjective
 
                     if (item != null)
                     {
-                        this.spawnItemParticles(world, pos, new ItemStack(item, 1));
+                        BlockPos blockPos = ((CakeObjective) (Object) this).get(CAKE_POS);
+
+                        if (blockPos != null)
+                        {
+                            this.spawnItemParticles(world, blockPos, new ItemStack(item, 1));
+                        }
                     }
                 });
+        }
+        else
+        {
+            MoreObjectivesMod.LOGGER.debug("Not a fruit cake!");
         }
     }
 

@@ -3,6 +3,7 @@ package lv.id.bonne.vaulthunters.moreobjectives.data;
 
 import java.util.function.Function;
 
+import lv.id.bonne.vaulthunters.moreobjectives.MoreObjectivesMod;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -15,12 +16,15 @@ public class CakeDataForDimension extends SavedData
 {
     public CakeDataForDimension()
     {
+        MoreObjectivesMod.LOGGER.debug("Creating config");
     }
 
 
     @Override
     public CompoundTag save(CompoundTag compoundTag)
     {
+        MoreObjectivesMod.LOGGER.debug("Saving config");
+
         compoundTag.putBoolean("fruit_cake", this.fruitCake);
         compoundTag.putString("cake_type", this.cakeType);
         compoundTag.putString("last_cake_type", this.lastCakeType);
@@ -97,6 +101,7 @@ public class CakeDataForDimension extends SavedData
     {
         return (tag) ->
         {
+            MoreObjectivesMod.LOGGER.debug("Loading config");
             CakeDataForDimension data = new CakeDataForDimension();
             data.fruitCake = tag.getBoolean("fruit_cake");
             data.cakeType = tag.getString("cake_type");
