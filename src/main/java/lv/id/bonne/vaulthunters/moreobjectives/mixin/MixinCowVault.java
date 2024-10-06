@@ -20,8 +20,10 @@ import iskallia.vault.VaultMod;
 import iskallia.vault.core.vault.Vault;
 import iskallia.vault.core.vault.WorldManager;
 import iskallia.vault.core.vault.modifier.spi.VaultModifier;
+import iskallia.vault.core.vault.objective.Objectives;
 import iskallia.vault.core.world.storage.VirtualWorld;
 import lv.id.bonne.vaulthunters.moreobjectives.MoreObjectivesMod;
+import lv.id.bonne.vaulthunters.moreobjectives.configs.CowVaultSettings;
 import lv.id.bonne.vaulthunters.moreobjectives.logic.CowMobLogic;
 import net.minecraft.resources.ResourceLocation;
 
@@ -43,13 +45,31 @@ public abstract class MixinCowVault
         remap = false)
     private void injectInitServer(VirtualWorld world, Vault vault, CallbackInfo ci)
     {
+        CowVaultSettings cowVaultSettings = MoreObjectivesMod.CONFIGURATION.getCowVaultSettings();
+
         // Check the theme section. Only in chaos vaults.
-        if (!((WorldManager) (Object) this).getOptional(WorldManager.THEME).
-            orElse(VaultMod.id("empty")).
-            equals(VaultMod.id("classic_vault_chaos")))
+
+        if (!cowVaultSettings.getTheme().equals(VaultMod.id("null")))
         {
-            // Only on chaos vaults.
-            return;
+            if (!((WorldManager) (Object) this).getOptional(WorldManager.THEME).
+                orElse(VaultMod.id("empty")).
+                equals(cowVaultSettings.getTheme()))
+            {
+                // Only on chaos vaults.
+                return;
+            }
+        }
+
+        if (!cowVaultSettings.getObjective().isEmpty())
+        {
+            if (!vault.getOptional(Vault.OBJECTIVES).
+                flatMap(objectives -> objectives.getOptional(Objectives.KEY)).
+                orElse("null").
+                equals(cowVaultSettings.getObjective()))
+            {
+                // Only on objective themes.
+                return;
+            }
         }
 
         // Now count modifiers.
@@ -58,7 +78,7 @@ public abstract class MixinCowVault
             List<VaultModifier<?>> modifierList = modifiers.getModifiers();
 
             Map<ResourceLocation, AtomicInteger> requiredModifiers =
-                MoreObjectivesMod.CONFIGURATION.getCowVaultsRequirements();
+                cowVaultSettings.getCowVaultsRequirements();
 
             // Count trigger modifiers.
             for (Iterator<VaultModifier<?>> iterator = modifierList.iterator();
@@ -80,9 +100,16 @@ public abstract class MixinCowVault
             // Mark vault as cow vault
             if (requiredModifiers.isEmpty())
             {
+                MoreObjectivesMod.LOGGER.debug("Cow Vault Triggered. Replace Mobs with cows.");
                 // Change to CowMobLogic
                 ((WorldManager) (Object) this).
                     setIfPresent(WorldManager.MOB_LOGIC, new CowMobLogic());
+            }
+            else
+            {
+                MoreObjectivesMod.LOGGER.debug("Failed to trigger Cow vault. Missing:");
+                requiredModifiers.forEach((key, value) ->
+                    MoreObjectivesMod.LOGGER.debug(" - " + key.toString() + " -> " + value.get()));
             }
         });
     }

@@ -8,6 +8,7 @@ package lv.id.bonne.vaulthunters.moreobjectives.configs;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import iskallia.vault.VaultMod;
+import lv.id.bonne.vaulthunters.moreobjectives.configs.adapters.ResourceLocationSerializer;
 import lv.id.bonne.vaulthunters.moreobjectives.configs.annotations.JsonComment;
 import net.minecraft.resources.ResourceLocation;
 
@@ -30,6 +32,8 @@ public class CowVaultSettings
     public CowVaultSettings()
     {
         this.cowVaultTrigger = new ArrayList<>();
+        this.theme = VaultMod.id("null");
+        this.objective = "";
     }
 
 
@@ -48,6 +52,9 @@ public class CowVaultSettings
         this.cowVaultTrigger.add(new Configuration.ModifierCounter(VaultMod.id("wild"), 5));
         this.cowVaultTrigger.add(new Configuration.ModifierCounter(VaultMod.id("furious_mobs"), 5));
         this.cowVaultTrigger.add(new Configuration.ModifierCounter(VaultMod.id("infuriated_mobs"), 5));
+
+        this.theme = VaultMod.id("classic_vault_chaos");
+        this.objective = "";
     }
 
 
@@ -75,6 +82,41 @@ public class CowVaultSettings
         return this.cowVaultTrigger;
     }
 
+
+    /**
+     * Gets theme.
+     *
+     * @return the theme
+     */
+    public ResourceLocation getTheme()
+    {
+        return this.theme;
+    }
+
+
+    /**
+     * Gets objective.
+     *
+     * @return the objective
+     */
+    public String getObjective()
+    {
+        return this.objective;
+    }
+
+
+    @JsonProperty("theme")
+    @JsonSerialize(using = ResourceLocationSerializer.class)
+    @JsonComment("This allows to define in which 'theme' cow vaults can be triggered.")
+    @JsonComment("The default value `the_vault:classic_vault_chaos` makes cow vaults to be")
+    @JsonComment("triggered only in chaos vaults.")
+    @JsonComment("Setting value to `the_vault:null` will make it work in all themes, and all vault types.")
+    private ResourceLocation theme;
+
+    @JsonProperty("objective")
+    @JsonComment("This allows to define in which 'objective' cow vaults can be triggered.")
+    @JsonComment("The default value `\"\"` allows it to generate in all objectives.")
+    private String objective;
 
     @JsonProperty("cow_vault_triggers")
     @JsonComment("The list of modifiers that triggers cow vaults.")
