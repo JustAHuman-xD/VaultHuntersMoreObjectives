@@ -160,6 +160,12 @@ public class Configuration
      */
     public CowVaultSettings getCowVaultSettings()
     {
+        if (this.cowVaultSettings == null)
+        {
+            this.cowVaultSettings = new CowVaultSettings();
+            this.cowVaultSettings.reset();
+        }
+
         return this.cowVaultSettings;
     }
 
@@ -171,6 +177,12 @@ public class Configuration
      */
     public FruitCakeSettings getFruitCakeSettings()
     {
+        if (this.fruitCakeSettings == null)
+        {
+            this.fruitCakeSettings = new FruitCakeSettings();
+            this.fruitCakeSettings.reset();
+        }
+
         return this.fruitCakeSettings;
     }
 
