@@ -9,29 +9,32 @@ package lv.id.bonne.vaulthunters.moreobjectives.configs;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
-
+import lv.id.bonne.vaulthunters.moreobjectives.MoreObjectivesMod;
 import lv.id.bonne.vaulthunters.moreobjectives.configs.adapters.ResourceLocationDeserializer;
 import lv.id.bonne.vaulthunters.moreobjectives.configs.adapters.ResourceLocationSerializer;
 import lv.id.bonne.vaulthunters.moreobjectives.configs.annotations.JsonComment;
 import lv.id.bonne.vaulthunters.moreobjectives.utils.CommentGeneration;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 
 
 /**
  * The configuration file that allows modifying some of settings.
  */
+@Mod.EventBusSubscriber(modid = MoreObjectivesMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Configuration
 {
     /**
@@ -41,6 +44,7 @@ public class Configuration
     {
         this.mapper = new ObjectMapper();
         this.mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        this.mapper.enable(JsonParser.Feature.ALLOW_COMMENTS);
 
         SimpleModule module = new SimpleModule();
 
@@ -71,6 +75,7 @@ public class Configuration
 
     /**
      * This returns the location of the config file.
+     *
      * @return The config file location
      */
     private File getConfigFile()
@@ -81,6 +86,7 @@ public class Configuration
 
     /**
      * This method reads the config file from file.
+     *
      * @return The configuration file.
      */
     public Configuration readConfig()
@@ -92,6 +98,7 @@ public class Configuration
         catch (IOException var2)
         {
             this.generateConfig();
+            MoreObjectivesMod.LOGGER.error("Failed to read config. Generated default one.");
             return this;
         }
     }
@@ -121,6 +128,7 @@ public class Configuration
 
     /**
      * This method writes the config file.
+     *
      * @throws IOException Exception if writing failed.
      */
     public void writeConfig() throws IOException
@@ -129,7 +137,7 @@ public class Configuration
 
         if (dir.exists() || dir.mkdirs())
         {
-            if (!this.getConfigFile().exists() || this.getConfigFile().createNewFile())
+            if (this.getConfigFile().exists() || this.getConfigFile().createNewFile())
             {
                 try
                 {
@@ -146,17 +154,36 @@ public class Configuration
 
 
     /**
-     * This method constructs and returns cow vault requirements.
-     * @return Map that links modifier to it's required count.
+     * Gets cow vault settings.
+     *
+     * @return the cow vault settings
      */
-    public Map<ResourceLocation, AtomicInteger> getCowVaultsRequirements()
+    public CowVaultSettings getCowVaultSettings()
     {
-        Map<ResourceLocation, AtomicInteger> map = new HashMap<>();
+        return this.cowVaultSettings;
+    }
 
-        this.cowVaultSettings.getCowVaultTrigger().forEach(value ->
-            map.computeIfAbsent(value.modifier(), modifier -> new AtomicInteger(value.count())));
 
-        return map;
+    /**
+     * Gets fruit cake settings.
+     *
+     * @return the fruit cake settings
+     */
+    public FruitCakeSettings getFruitCakeSettings()
+    {
+        return this.fruitCakeSettings;
+    }
+
+
+    @SubscribeEvent
+    public static void onConfigReload(ModConfigEvent.Reloading event)
+    {
+        // Check if the reloaded config belongs to your mod
+        if (event.getConfig().getModId().equals(MoreObjectivesMod.MODID))
+        {
+            MoreObjectivesMod.LOGGER.info("Reloading configuration...");
+            MoreObjectivesMod.CONFIGURATION.readConfig();
+        }
     }
 
 
@@ -210,18 +237,17 @@ public class Configuration
         private int count;
     }
 
-
-    @JsonProperty("fruit_cake_settings")
-    @JsonComment("The Fruit Cake settings.")
-    public FruitCakeSettings fruitCakeSettings;
-
-    @JsonProperty("cow_vault_settings")
-    @JsonComment("The cow vault settings.")
-    private CowVaultSettings cowVaultSettings;
-
     /**
      * The object mapper for Jackson.
      */
     @JsonIgnore
     private final ObjectMapper mapper;
+
+    @JsonProperty("fruit_cake_settings")
+    @JsonComment("The Fruit Cake settings.")
+    private FruitCakeSettings fruitCakeSettings;
+
+    @JsonProperty("cow_vault_settings")
+    @JsonComment("The cow vault settings.")
+    private CowVaultSettings cowVaultSettings;
 }

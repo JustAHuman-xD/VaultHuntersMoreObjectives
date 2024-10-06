@@ -9,10 +9,14 @@ package lv.id.bonne.vaulthunters.moreobjectives.configs;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import iskallia.vault.VaultMod;
 import lv.id.bonne.vaulthunters.moreobjectives.configs.annotations.JsonComment;
+import net.minecraft.resources.ResourceLocation;
 
 
 /**
@@ -44,6 +48,21 @@ public class CowVaultSettings
         this.cowVaultTrigger.add(new Configuration.ModifierCounter(VaultMod.id("wild"), 5));
         this.cowVaultTrigger.add(new Configuration.ModifierCounter(VaultMod.id("furious_mobs"), 5));
         this.cowVaultTrigger.add(new Configuration.ModifierCounter(VaultMod.id("infuriated_mobs"), 5));
+    }
+
+
+    /**
+     * This method constructs and returns cow vault requirements.
+     * @return Map that links modifier to it's required count.
+     */
+    public Map<ResourceLocation, AtomicInteger> getCowVaultsRequirements()
+    {
+        Map<ResourceLocation, AtomicInteger> map = new HashMap<>();
+
+        this.getCowVaultTrigger().forEach(value ->
+            map.computeIfAbsent(value.modifier(), modifier -> new AtomicInteger(value.count())));
+
+        return map;
     }
 
 
