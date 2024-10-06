@@ -15,10 +15,16 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.Optional;
 
 import iskallia.vault.core.data.key.FieldKey;
+import iskallia.vault.core.vault.Vault;
+import iskallia.vault.core.vault.modifier.spi.VaultModifier;
 import iskallia.vault.core.vault.objective.Objective;
 import iskallia.vault.core.vault.objective.Objectives;
 import iskallia.vault.core.vault.player.ClassicListenersLogic;
+import iskallia.vault.core.world.storage.VirtualWorld;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import lv.id.bonne.vaulthunters.moreobjectives.utils.ICakeObjectiveAccessor;
+import net.minecraft.server.level.ServerPlayer;
 
 
 /**
@@ -32,6 +38,51 @@ public class MixinCakeTextChange
     private Object replaceEnterCakeText(Objectives instance, FieldKey<String> fieldKey)
     {
         return this.appendCakeText(instance, fieldKey);
+    }
+
+
+    @Redirect(method = "printJoinMessage",
+        at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/objects/ObjectIterator;hasNext()Z", ordinal = 0))
+    private boolean hasNext(ObjectIterator<Object2IntMap.Entry<VaultModifier<?>>> instance, VirtualWorld world, Vault vault, ServerPlayer player)
+    {
+        if (!instance.hasNext())
+        {
+            // Fast check and exit
+            return false;
+        }
+
+        Objectives objectives = vault.get(Vault.OBJECTIVES);
+
+        if (!objectives.get(Objectives.KEY).equals("cake"))
+        {
+            // Return default value as objective is not cake vault
+            return instance.hasNext();
+        }
+
+        Optional<Objective.ObjList> cakeObjectives = objectives.getOptional(Objectives.LIST);
+
+        if (cakeObjectives.isEmpty())
+        {
+            // Return default value as objective list is emtpy.
+            return instance.hasNext();
+        }
+
+        Objective.ObjList objectiveList = cakeObjectives.get();
+
+        for (Objective objective : objectiveList)
+        {
+            if (objective instanceof ICakeObjectiveAccessor cake)
+            {
+                if (objective.has(cake.getCakeType()))
+                {
+                    // Fruit cakes does not display modifiers.
+                    return false;
+                }
+            }
+        }
+
+        // Return default value as it is not fruit cake.
+        return instance.hasNext();
     }
 
 
