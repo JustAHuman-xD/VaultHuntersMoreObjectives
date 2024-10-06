@@ -93,7 +93,14 @@ public class Configuration
     {
         try
         {
-            return this.mapper.readValue(this.getConfigFile(), this.getClass());
+            Configuration configuration = this.mapper.readValue(this.getConfigFile(), this.getClass());
+
+            if (configuration.validate())
+            {
+                this.writeConfig();
+            }
+
+            return configuration;
         }
         catch (IOException var2)
         {
@@ -123,6 +130,16 @@ public class Configuration
         }
 
         this.fruitCakeSettings.reset();
+    }
+
+
+    /**
+     * This method returns if configs were invalid.
+     * @return {@code true} if configs were invalid.
+     */
+    private boolean validate()
+    {
+        return this.getFruitCakeSettings().validate() || this.getCowVaultSettings().validate();
     }
 
 

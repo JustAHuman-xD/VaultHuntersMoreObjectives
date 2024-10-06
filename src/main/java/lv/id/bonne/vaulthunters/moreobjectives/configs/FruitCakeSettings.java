@@ -71,6 +71,36 @@ public class FruitCakeSettings
 
 
     /**
+     * This method validates config for missing fields.
+     * @return @{code true} if config was invalid.
+     */
+    public boolean validate()
+    {
+        boolean updated = false;
+
+        if (this.chance < 0 || this.chance > 1)
+        {
+            updated = true;
+            this.chance = 0;
+        }
+
+        if (this.startModifiers == null)
+        {
+            updated = true;
+            this.startModifiers = new ArrayList<>();
+        }
+
+        if (this.fruits == null)
+        {
+            updated = true;
+            this.fruits = new ArrayList<>();
+        }
+
+        return updated;
+    }
+
+
+    /**
      * This method returns fruits chance map.
      *
      * @return The fruit chance map.

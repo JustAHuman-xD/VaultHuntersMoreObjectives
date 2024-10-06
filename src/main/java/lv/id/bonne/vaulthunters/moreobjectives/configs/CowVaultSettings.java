@@ -59,6 +59,36 @@ public class CowVaultSettings
 
 
     /**
+     * This method validates config for missing fields.
+     * @return @{code true} if config was invalid.
+     */
+    public boolean validate()
+    {
+        boolean updated = false;
+
+        if (this.theme == null)
+        {
+            updated = true;
+            this.theme = VaultMod.id("null");
+        }
+
+        if (this.cowVaultTrigger == null)
+        {
+            updated = true;
+            this.cowVaultTrigger = new ArrayList<>();
+        }
+
+        if (this.objective == null)
+        {
+            updated = true;
+            this.objective = "";
+        }
+
+        return updated;
+    }
+
+
+    /**
      * This method constructs and returns cow vault requirements.
      * @return Map that links modifier to it's required count.
      */
