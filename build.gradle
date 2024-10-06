@@ -178,7 +178,7 @@ dependencies {
 
     // Curseforge mod dependencies
     implementation fg.deobf("iskallia.vault:the_vault-3434:3434")
-    //implementation fg.deobf("curse.maven:vault-hunters-official-mod-458203:${vault_hunters_version}")
+//    implementation fg.deobf("curse.maven:vault-hunters-official-mod-458203:${vault_hunters_version}")
 
 
 //    Dependencies for Runtime Debug
@@ -248,6 +248,10 @@ tasks.withType(JavaCompile).configureEach {
 shadowJar {
     configurations = [project.configurations.shade]
     relocate 'com.fasterxml.jackson', 'shadowed.com.fasterxml.jackson'
+}
+
+reobf {
+    shadowJar {} // Reobfuscate the shadowed JAR
 }
 
 tasks.build.dependsOn shadowJar

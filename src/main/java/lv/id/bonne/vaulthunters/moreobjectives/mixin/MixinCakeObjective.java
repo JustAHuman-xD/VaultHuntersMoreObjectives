@@ -7,22 +7,16 @@
 package lv.id.bonne.vaulthunters.moreobjectives.mixin;
 
 
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.*;
 
-import iskallia.vault.core.Version;
-import iskallia.vault.core.data.adapter.Adapters;
-import iskallia.vault.core.data.key.FieldKey;
-import iskallia.vault.core.data.key.registry.FieldRegistry;
 import iskallia.vault.core.random.ChunkRandom;
 import iskallia.vault.core.random.RandomSource;
 import iskallia.vault.core.util.RegionPos;
@@ -37,8 +31,11 @@ import iskallia.vault.core.world.storage.VirtualWorld;
 import lv.id.bonne.vaulthunters.moreobjectives.MoreObjectivesMod;
 import lv.id.bonne.vaulthunters.moreobjectives.configs.Configuration;
 import lv.id.bonne.vaulthunters.moreobjectives.configs.FruitCakeSettings;
-import lv.id.bonne.vaulthunters.moreobjectives.utils.ICakeObjectiveAccessor;
+import lv.id.bonne.vaulthunters.moreobjectives.data.CakeDataForDimension;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -48,56 +45,10 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
 
-import static iskallia.vault.core.data.ICompound.DISK;
-
 
 @Mixin(value = CakeObjective.class, remap = false)
-public abstract class MixinCakeObjective implements ICakeObjectiveAccessor
+public abstract class MixinCakeObjective
 {
-    @Shadow
-    @Final
-    public static FieldRegistry FIELDS;
-
-    @Unique
-    private static FieldKey<String> CAKE_TYPE;
-
-    @Unique
-    private static FieldKey<String> LAST_CAKE_TYPE;
-
-
-    @Override
-    @Unique
-    public FieldKey<String> getCakeType()
-    {
-        return CAKE_TYPE;
-    }
-
-
-    @Inject(method = "<clinit>", at = @At("TAIL"))
-    private static void injectCustomField(CallbackInfo ci)
-    {
-        CAKE_TYPE = FieldKey.of("cake_type", String.class).
-            with(Version.v1_0,
-            Adapters.UTF_8, DISK.all()).
-            register(FIELDS);
-        LAST_CAKE_TYPE = FieldKey.of("last_cake_type", String.class).
-            with(Version.v1_0,
-                Adapters.UTF_8, DISK.all()).
-            register(FIELDS);
-    }
-
-
-    @Inject(method = "<init>(Lnet/minecraft/resources/ResourceLocation;)V", at = @At("TAIL"))
-    private void injectValue(CallbackInfo ci)
-    {
-        if (MoreObjectivesMod.CONFIGURATION.fruitCakeSettings.getChance() > new Random().nextFloat())
-        {
-            // First cake never gives extra time.
-            ((CakeObjective) (Object) this).set(CAKE_TYPE, "null");
-        }
-    }
-
-
     @Inject(method = "initServer", at = @At("TAIL"))
     private void injectModifiers(VirtualWorld world, Vault vault, CallbackInfo ci)
     {
@@ -109,9 +60,15 @@ public abstract class MixinCakeObjective implements ICakeObjectiveAccessor
             return;
         }
 
-        if (((CakeObjective) (Object) this).has(CAKE_TYPE))
+        if (MoreObjectivesMod.CONFIGURATION.getFruitCakeSettings().getChance() > new Random().nextFloat())
         {
-            FruitCakeSettings cakeVault = MoreObjectivesMod.CONFIGURATION.fruitCakeSettings;
+            MoreObjectivesMod.LOGGER.debug("Fruit Cake Vault Triggered.");
+
+            CakeDataForDimension cakeDataForDimension = CakeDataForDimension.get(world);
+            cakeDataForDimension.setFruitCake(true);
+            cakeDataForDimension.setCakeType("");
+
+            FruitCakeSettings cakeVault = MoreObjectivesMod.CONFIGURATION.getFruitCakeSettings();
 
             if (cakeVault != null)
             {
@@ -123,6 +80,10 @@ public abstract class MixinCakeObjective implements ICakeObjectiveAccessor
 
                         opt.ifPresent(mod -> {
                             modifiers.addModifier(mod, startModifier.count(), true, ChunkRandom.any());
+                            MoreObjectivesMod.LOGGER.debug("Add modifier: " +
+                                mod.getDisplayName() +
+                                " x " + startModifier.count() +
+                                " to fruit cake vault.");
                         });
                     }
                 });
@@ -131,23 +92,31 @@ public abstract class MixinCakeObjective implements ICakeObjectiveAccessor
     }
 
 
-    @ModifyArg(method = "addModifier", at = @At(value = "INVOKE",
-        target = "Lnet/minecraft/network/chat/TextComponent;<init>(Ljava/lang/String;)V", ordinal = 4))
-    private String modifyCakeTextOne(String original)
+    @Redirect(method = "addModifier", at = @At(value = "INVOKE",
+        target = "Lnet/minecraft/network/chat/MutableComponent;append(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/network/chat/MutableComponent;"))
+    private MutableComponent modifyCakeTextTwo(MutableComponent instance, Component component, VirtualWorld world)
     {
-        Optional<String> optional = ((CakeObjective) (Object) this).getOptional(LAST_CAKE_TYPE);
+        if (component.getContents().equals("cake"))
+        {
+            CakeDataForDimension cakeDataForDimension = CakeDataForDimension.get(world);
 
-        return optional.filter(s -> !s.equals("null")).map(s -> s + " " + original).orElse(original);
-    }
-
-
-    @ModifyArg(method = "addModifier", at = @At(value = "INVOKE",
-        target = "Lnet/minecraft/network/chat/TextComponent;<init>(Ljava/lang/String;)V", ordinal = 7))
-    private String modifyCakeTextTwo(String original)
-    {
-        Optional<String> optional = ((CakeObjective) (Object) this).getOptional(LAST_CAKE_TYPE);
-
-        return optional.filter(s -> !s.equals("null")).map(s -> s + " " + original).orElse(original);
+            if (cakeDataForDimension.isFruitCake() &&
+                !cakeDataForDimension.getLastCakeType().isBlank())
+            {
+                // replace text with fruit + cake
+                return instance.append(new TextComponent(cakeDataForDimension.getLastCakeType() + " cake"));
+            }
+            else
+            {
+                // return original value.
+                return instance.append(component);
+            }
+        }
+        else
+        {
+            // return original value.
+            return instance.append(component);
+        }
     }
 
 
@@ -158,11 +127,13 @@ public abstract class MixinCakeObjective implements ICakeObjectiveAccessor
         RandomSource random,
         CallbackInfo ci)
     {
-        if (((CakeObjective) (Object) this).has(LAST_CAKE_TYPE))
-        {
-            String value = ((CakeObjective) (Object) this).get(LAST_CAKE_TYPE);
+        CakeDataForDimension cakeDataForDimension = CakeDataForDimension.get(world);
 
-            MoreObjectivesMod.CONFIGURATION.fruitCakeSettings.getFruits().stream().
+        if (cakeDataForDimension.isFruitCake())
+        {
+            String value = cakeDataForDimension.getLastCakeType();
+
+            MoreObjectivesMod.CONFIGURATION.getFruitCakeSettings().getFruits().stream().
                 filter(fruit -> fruit.getName().equals(value)).
                 findAny().
                 ifPresent(fruit ->
@@ -188,21 +159,21 @@ public abstract class MixinCakeObjective implements ICakeObjectiveAccessor
         int z,
         int y)
     {
-        if (((CakeObjective) (Object) this).has(CAKE_TYPE))
-        {
-            ((CakeObjective) (Object) this).set(LAST_CAKE_TYPE, ((CakeObjective) (Object) this).get(CAKE_TYPE));
+        CakeDataForDimension cakeDataForDimension = CakeDataForDimension.get(world);
 
+        if (cakeDataForDimension.isFruitCake())
+        {
             Map.Entry<Float, FruitCakeSettings.Fruit> floatFruitEntry =
-                MoreObjectivesMod.CONFIGURATION.fruitCakeSettings.getFruitChances().higherEntry(random.nextFloat());
+                MoreObjectivesMod.CONFIGURATION.getFruitCakeSettings().getFruitChances().higherEntry(random.nextFloat());
 
             if (floatFruitEntry != null)
             {
-                ((CakeObjective) (Object) this).set(CAKE_TYPE, floatFruitEntry.getValue().getName());
+                cakeDataForDimension.setCakeType(floatFruitEntry.getValue().getName());
             }
 
-            String value = floatFruitEntry != null ? floatFruitEntry.getValue().getName() : "null";
+            String value = floatFruitEntry != null ? floatFruitEntry.getValue().getName() : "";
 
-            MoreObjectivesMod.CONFIGURATION.fruitCakeSettings.getFruits().stream().
+            MoreObjectivesMod.CONFIGURATION.getFruitCakeSettings().getFruits().stream().
                 filter(fruit -> fruit.getName().equals(value)).
                 findAny().
                 ifPresent(fruit ->

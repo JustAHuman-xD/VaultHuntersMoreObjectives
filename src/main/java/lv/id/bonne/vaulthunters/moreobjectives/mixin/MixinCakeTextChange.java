@@ -17,14 +17,13 @@ import java.util.Optional;
 import iskallia.vault.core.data.key.FieldKey;
 import iskallia.vault.core.vault.Vault;
 import iskallia.vault.core.vault.modifier.spi.VaultModifier;
-import iskallia.vault.core.vault.objective.Objective;
 import iskallia.vault.core.vault.objective.Objectives;
 import iskallia.vault.core.vault.player.ClassicListenersLogic;
 import iskallia.vault.core.world.storage.VirtualWorld;
+import iskallia.vault.world.data.ServerVaults;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
-import lv.id.bonne.vaulthunters.moreobjectives.utils.ICakeObjectiveAccessor;
-import net.minecraft.server.level.ServerPlayer;
+import lv.id.bonne.vaulthunters.moreobjectives.data.CakeDataForDimension;
 
 
 /**
@@ -35,15 +34,15 @@ public class MixinCakeTextChange
 {
     @Redirect(method = "printJoinMessage",
         at = @At(value = "INVOKE", target = "Liskallia/vault/core/vault/objective/Objectives;get(Liskallia/vault/core/data/key/FieldKey;)Ljava/lang/Object;"))
-    private Object replaceEnterCakeText(Objectives instance, FieldKey<String> fieldKey)
+    private Object replaceEnterCakeText(Objectives instance, FieldKey<String> fieldKey, VirtualWorld world)
     {
-        return this.appendCakeText(instance, fieldKey);
+        return this.appendCakeText(instance, fieldKey, Optional.of(world));
     }
 
 
     @Redirect(method = "printJoinMessage",
         at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/objects/ObjectIterator;hasNext()Z", ordinal = 0))
-    private boolean hasNext(ObjectIterator<Object2IntMap.Entry<VaultModifier<?>>> instance, VirtualWorld world, Vault vault, ServerPlayer player)
+    private boolean hasNext(ObjectIterator<Object2IntMap.Entry<VaultModifier<?>>> instance, VirtualWorld world, Vault vault)
     {
         if (!instance.hasNext())
         {
@@ -59,26 +58,12 @@ public class MixinCakeTextChange
             return instance.hasNext();
         }
 
-        Optional<Objective.ObjList> cakeObjectives = objectives.getOptional(Objectives.LIST);
+        CakeDataForDimension cakeDataForDimension = CakeDataForDimension.get(world);
 
-        if (cakeObjectives.isEmpty())
+        if (cakeDataForDimension.isFruitCake())
         {
-            // Return default value as objective list is emtpy.
-            return instance.hasNext();
-        }
-
-        Objective.ObjList objectiveList = cakeObjectives.get();
-
-        for (Objective objective : objectiveList)
-        {
-            if (objective instanceof ICakeObjectiveAccessor cake)
-            {
-                if (objective.has(cake.getCakeType()))
-                {
-                    // Fruit cakes does not display modifiers.
-                    return false;
-                }
-            }
+            // This is fruit cake vault. No modifiers displayed.
+            return false;
         }
 
         // Return default value as it is not fruit cake.
@@ -87,9 +72,9 @@ public class MixinCakeTextChange
 
 
     @Redirect(method = "lambda$initServer$1", at = @At(value = "INVOKE", target = "Liskallia/vault/core/vault/objective/Objectives;get(Liskallia/vault/core/data/key/FieldKey;)Ljava/lang/Object;"))
-    private Object replaceExitCakeText(Objectives instance, FieldKey<String> fieldKey)
+    private Object replaceExitCakeText(Objectives instance, FieldKey<String> fieldKey, Vault vault)
     {
-        return this.appendCakeText(instance, fieldKey);
+        return this.appendCakeText(instance, fieldKey, ServerVaults.getWorld(vault));
     }
 
 
@@ -101,43 +86,21 @@ public class MixinCakeTextChange
      * @return Objective name.
      */
     @Unique
-    private String appendCakeText(Objectives instance, FieldKey<String> fieldKey)
+    private String appendCakeText(Objectives instance, FieldKey<String> fieldKey, Optional<VirtualWorld> worldOptional)
     {
-        if (!instance.get(fieldKey).equals("cake"))
+        if (!instance.get(fieldKey).equals("cake") || worldOptional.isEmpty())
         {
             return instance.get(fieldKey);
         }
 
-        Optional<Objective.ObjList> cakeObjectives = instance.getOptional(Objectives.LIST);
+        CakeDataForDimension cakeDataForDimension = CakeDataForDimension.get(worldOptional.get());
 
-        if (cakeObjectives.isEmpty())
+        if (cakeDataForDimension.isFruitCake())
         {
-            return instance.get(fieldKey);
+            // This is fruit cake vault. No modifiers displayed.
+            return "Fruit Cake";
         }
 
-        StringBuilder text = new StringBuilder();
-
-        cakeObjectives.ifPresent(objectives ->
-        {
-            objectives.forEach(objectiveClass ->
-            {
-                if (objectiveClass instanceof ICakeObjectiveAccessor cake)
-                {
-                    if (objectiveClass.has(cake.getCakeType()))
-                    {
-                        text.append("Fruit Cake");
-                    }
-                }
-            });
-        });
-
-        if (text.isEmpty())
-        {
-            return instance.get(fieldKey);
-        }
-        else
-        {
-            return text.toString();
-        }
+        return instance.get(fieldKey);
     }
 }
