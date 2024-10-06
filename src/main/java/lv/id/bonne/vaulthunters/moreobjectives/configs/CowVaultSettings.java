@@ -7,8 +7,7 @@
 package lv.id.bonne.vaulthunters.moreobjectives.configs;
 
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,8 +57,7 @@ public class CowVaultSettings
     }
 
 
-    @Expose
-    @SerializedName("cow_vault_triggers")
+    @JsonProperty("cow_vault_triggers")
     @JsonComment("The list of modifiers that triggers cow vaults.")
     @JsonComment("The default list contains:")
     @JsonComment(" - the_vault:wild modifier 5 times")

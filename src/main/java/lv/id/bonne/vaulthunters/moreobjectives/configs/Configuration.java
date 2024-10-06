@@ -7,17 +7,24 @@
 package lv.id.bonne.vaulthunters.moreobjectives.configs;
 
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import lv.id.bonne.vaulthunters.moreobjectives.configs.adapters.ResourceLocationAdapter;
+
+import lv.id.bonne.vaulthunters.moreobjectives.configs.adapters.ResourceLocationDeserializer;
+import lv.id.bonne.vaulthunters.moreobjectives.configs.adapters.ResourceLocationSerializer;
 import lv.id.bonne.vaulthunters.moreobjectives.configs.annotations.JsonComment;
+import lv.id.bonne.vaulthunters.moreobjectives.utils.CommentGeneration;
 import net.minecraft.resources.ResourceLocation;
 
 
@@ -26,6 +33,23 @@ import net.minecraft.resources.ResourceLocation;
  */
 public class Configuration
 {
+    /**
+     * Default constructor.
+     */
+    public Configuration()
+    {
+        this.mapper = new ObjectMapper();
+        this.mapper.enable(SerializationFeature.INDENT_OUTPUT);
+
+        SimpleModule module = new SimpleModule();
+
+        module.addSerializer(ResourceLocation.class, new ResourceLocationSerializer());
+        module.addDeserializer(ResourceLocation.class, new ResourceLocationDeserializer());
+
+        this.mapper.registerModule(module);
+    }
+
+
     /**
      * This method generates config if it is missing.
      */
@@ -62,9 +86,9 @@ public class Configuration
     {
         try
         {
-            return GSON.fromJson(new FileReader(this.getConfigFile()), this.getClass());
+            return this.mapper.readValue(this.getConfigFile(), this.getClass());
         }
-        catch (FileNotFoundException var2)
+        catch (IOException var2)
         {
             this.generateConfig();
             return this;
@@ -106,10 +130,15 @@ public class Configuration
         {
             if (this.getConfigFile().exists() || this.getConfigFile().createNewFile())
             {
-                FileWriter writer = new FileWriter(this.getConfigFile());
-                GSON.toJson(this, writer);
-                writer.flush();
-                writer.close();
+                try
+                {
+                    Path path = Paths.get(this.getConfigFile().toURI());
+                    Files.write(path, CommentGeneration.writeWithComments(this.mapper, this).getBytes());
+                }
+                catch (IllegalAccessException e)
+                {
+                    throw new IOException(e);
+                }
             }
         }
     }
@@ -170,32 +199,27 @@ public class Configuration
         }
 
 
-        @Expose
+        @JsonProperty("modifier")
         @JsonComment("The Vault Hunters modifier identifier.")
         private ResourceLocation modifier;
 
-        @Expose
+        @JsonProperty("count")
         @JsonComment("The count of modifiers.")
         private int count;
     }
 
 
-    @Expose
-    @SerializedName("fruit_cake_settings")
+    @JsonProperty("fruit_cake_settings")
     @JsonComment("The Fruit Cake settings.")
     public FruitCakeSettings fruitCakeSettings;
 
-    @Expose
-    @SerializedName("cow_vault_settings")
+    @JsonProperty("cow_vault_settings")
     @JsonComment("The cow vault settings.")
     private CowVaultSettings cowVaultSettings;
 
     /**
-     * The GSON builder.
+     * The object mapper for Jackson.
      */
-    private static final Gson GSON = new GsonBuilder().
-        registerTypeAdapter(ResourceLocation.class, new ResourceLocationAdapter()).
-        excludeFieldsWithoutExposeAnnotation().
-        setPrettyPrinting().
-        create();
+    @JsonIgnore
+    private final ObjectMapper mapper;
 }

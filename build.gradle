@@ -6,6 +6,7 @@ buildscript {
     }
     dependencies {
         classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
+        classpath "gradle.plugin.com.github.jengelman.gradle.plugins:shadow:7.0.0"
     }
 }
 
@@ -14,6 +15,7 @@ plugins {
     id 'idea'
     id "com.matthewprenger.cursegradle" version "1.4.0"
     id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
 apply plugin: 'org.spongepowered.mixin'
@@ -27,6 +29,13 @@ base {
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(17)
+}
+
+configurations {
+    library
+    shade
+    implementation.extendsFrom library
+    shade.extendsFrom library
 }
 
 minecraft {
@@ -123,6 +132,12 @@ minecraft {
     }
 }
 
+minecraft.runs.all {
+    lazyToken('minecraft_classpath') {
+        configurations.library.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
+    }
+}
+
 mixin {
     add sourceSets.main, "${mod_id}.refmap.json"
 
@@ -153,7 +168,13 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
-    implementation 'com.google.code.gson:gson:2.9.0'
+    library 'com.fasterxml.jackson.core:jackson-core:2.13.4'
+    library 'com.fasterxml.jackson.core:jackson-databind:2.13.4'
+    library 'com.fasterxml.jackson.core:jackson-annotations:2.13.4'
+
+    shade 'com.fasterxml.jackson.core:jackson-core:2.13.4'
+    shade 'com.fasterxml.jackson.core:jackson-databind:2.13.4'
+    shade 'com.fasterxml.jackson.core:jackson-annotations:2.13.4'
 
     // Curseforge mod dependencies
     implementation fg.deobf("iskallia.vault:the_vault-3434:3434")
@@ -223,3 +244,10 @@ tasks.named('jar', Jar).configure {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
+
+shadowJar {
+    configurations = [project.configurations.shade]
+    relocate 'com.fasterxml.jackson', 'shadowed.com.fasterxml.jackson'
+}
+
+tasks.build.dependsOn shadowJar

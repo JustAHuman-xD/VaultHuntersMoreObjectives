@@ -7,8 +7,8 @@
 package lv.id.bonne.vaulthunters.moreobjectives.configs;
 
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
@@ -193,38 +193,37 @@ public class FruitCakeSettings
         }
 
 
-        @Expose
+        @JsonProperty("name")
         @JsonComment("The name of fruit that will be added before cake name when player clicks on cake.")
         private String name;
 
-        @Expose
+        @JsonProperty("icon")
         @JsonComment("The icon resource location. You can use any item in minecraft, as long as you")
         @JsonComment("provide correct resource location to it.")
         @JsonComment("The icon is spawned over cake as item to show it.")
         private ResourceLocation icon;
 
-        @Expose
+        @JsonProperty("increment")
         @JsonComment("The time increment in game ticks that is added for clicking on a cake.")
         @JsonComment("A second is 20 game ticks (normally) so your time in seconds need to be")
         @JsonComment("multiplied by 20.")
         private int increment;
 
-        @Expose
+        @JsonProperty("chance")
         @JsonComment("The chance for cake to spawn with this fruit.")
         @JsonComment("The value should be between 0 to 1.")
         private float chance;
     }
 
 
-    @Expose
+    @JsonProperty("chance")
     @JsonComment("The chance for cake objective to be Fruit Cake.")
     @JsonComment("The default chance is 0.1 which is 10%.")
     @JsonComment("Value 0 and bellow will mean that fruit cakes are disabled.")
     @JsonComment("Value 1 and above will mean that all cake vaults will be fruit vaults.")
     private float chance;
 
-    @Expose
-    @SerializedName("start_modifiers")
+    @JsonProperty("start_modifiers")
     @JsonComment("The start modifiers that are applied on the cake vault start.")
     @JsonComment("You can set any modifiers you want to be added for the vault.")
     @JsonComment("The default modifiers are:")
@@ -232,7 +231,7 @@ public class FruitCakeSettings
     @JsonComment(" - the_vault:shortened modifier 15 times")
     private List<Configuration.ModifierCounter> startModifiers;
 
-    @Expose
+    @JsonProperty("fruits")
     @JsonComment("The fruits that can be added for cakes to be tastier.")
     @JsonComment("Chosen fruits matches VH fruits, however, you can use any values and names you want.")
     @JsonComment("The default fruits are:")
@@ -248,6 +247,7 @@ public class FruitCakeSettings
     /**
      * This tree map allows getting fruits by their chance value.
      */
+    @JsonIgnore
     private TreeMap<Float, Fruit> fruitMap;
 }
 
