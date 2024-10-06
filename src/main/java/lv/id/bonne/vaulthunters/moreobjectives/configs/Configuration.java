@@ -26,15 +26,15 @@ import lv.id.bonne.vaulthunters.moreobjectives.configs.adapters.ResourceLocation
 import lv.id.bonne.vaulthunters.moreobjectives.configs.annotations.JsonComment;
 import lv.id.bonne.vaulthunters.moreobjectives.utils.CommentGeneration;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
 
 
 /**
  * The configuration file that allows modifying some of settings.
  */
-@Mod.EventBusSubscriber(modid = MoreObjectivesMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(modid = MoreObjectivesMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class Configuration
 {
     /**
@@ -205,14 +205,10 @@ public class Configuration
 
 
     @SubscribeEvent
-    public static void onConfigReload(ModConfigEvent.Reloading event)
+    public static void onConfigReload(AddReloadListenerEvent event)
     {
-        // Check if the reloaded config belongs to your mod
-        if (event.getConfig().getModId().equals(MoreObjectivesMod.MODID))
-        {
-            MoreObjectivesMod.LOGGER.info("Reloading configuration...");
-            MoreObjectivesMod.CONFIGURATION.readConfig();
-        }
+        MoreObjectivesMod.LOGGER.info("Reloading configuration...");
+        MoreObjectivesMod.CONFIGURATION = MoreObjectivesMod.CONFIGURATION.readConfig();
     }
 
 
@@ -221,6 +217,14 @@ public class Configuration
      */
     public static final class ModifierCounter
     {
+        /**
+         * Empty constructor for reader.
+         */
+        public ModifierCounter()
+        {
+        }
+
+
         /**
          * Instantiates a new Modifier counter.
          *

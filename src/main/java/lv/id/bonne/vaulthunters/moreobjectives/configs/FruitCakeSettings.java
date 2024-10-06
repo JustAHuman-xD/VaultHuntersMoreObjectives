@@ -165,6 +165,14 @@ public class FruitCakeSettings
     public static class Fruit
     {
         /**
+         * Empty constructor for reader
+         */
+        public Fruit()
+        {
+        }
+
+
+        /**
          * The default constructor for fruit.
          *
          * @param name The name of fruit
