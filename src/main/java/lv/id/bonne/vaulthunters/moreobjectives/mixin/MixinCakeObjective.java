@@ -90,9 +90,7 @@ public abstract class MixinCakeObjective implements ICakeObjectiveAccessor
     @Inject(method = "<init>(Lnet/minecraft/resources/ResourceLocation;)V", at = @At("TAIL"))
     private void injectValue(CallbackInfo ci)
     {
-        ChunkRandom random = ChunkRandom.any();
-
-        if (MoreObjectivesMod.CONFIGURATION.fruitCakeSettings.getChance() > random.nextFloat())
+        if (MoreObjectivesMod.CONFIGURATION.fruitCakeSettings.getChance() > new Random().nextFloat())
         {
             // First cake never gives extra time.
             ((CakeObjective) (Object) this).set(CAKE_TYPE, "null");
