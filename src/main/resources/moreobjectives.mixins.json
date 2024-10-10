@@ -4,6 +4,7 @@
   "package": "lv.id.bonne.vaulthunters.moreobjectives.mixin",
   "compatibilityLevel": "JAVA_17",
   "refmap": "moreobjectives.refmap.json",
+  "plugin": "lv.id.bonne.vaulthunters.moreobjectives.VaultHuntersIntegrationModConfiguration",
   "mixins": [
     "MixinCakeObjective",
     "MixinCakeTextChange",

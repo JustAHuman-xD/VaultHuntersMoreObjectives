@@ -7,13 +7,14 @@
 package lv.id.bonne.vaulthunters.moreobjectives.mixin;
 
 
+import com.llamalad7.mixinextras.sugar.Local;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.*;
@@ -35,9 +36,6 @@ import lv.id.bonne.vaulthunters.moreobjectives.configs.Configuration;
 import lv.id.bonne.vaulthunters.moreobjectives.configs.FruitCakeSettings;
 import lv.id.bonne.vaulthunters.moreobjectives.data.CakeDataForDimension;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -99,30 +97,25 @@ public abstract class MixinCakeObjective
     }
 
 
-    @Redirect(method = "addModifier", at = @At(value = "INVOKE",
-        target = "Lnet/minecraft/network/chat/MutableComponent;append(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/network/chat/MutableComponent;"))
-    private MutableComponent modifyCakeTextTwo(MutableComponent instance, Component component, VirtualWorld world)
+    @ModifyArg(method = "addModifier", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/chat/TextComponent;<init>(Ljava/lang/String;)V"))
+    private String aa(String value, @Local VirtualWorld world)
     {
-        if (component.getContents().equals("cake"))
+        if (!value.equals("cake"))
         {
-            CakeDataForDimension cakeDataForDimension = CakeDataForDimension.get(world);
+            return value;
+        }
 
-            if (cakeDataForDimension.isFruitCake() &&
-                !cakeDataForDimension.getLastCakeType().isBlank())
-            {
-                // replace text with fruit + cake
-                return instance.append(new TextComponent(cakeDataForDimension.getLastCakeType() + " cake"));
-            }
-            else
-            {
-                // return original value.
-                return instance.append(component);
-            }
+        CakeDataForDimension cakeDataForDimension = CakeDataForDimension.get(world);
+
+        if (cakeDataForDimension.isFruitCake() &&
+            !cakeDataForDimension.getLastCakeType().isBlank())
+        {
+            // replace text with fruit + cake
+            return cakeDataForDimension.getLastCakeType() + " cake";
         }
         else
         {
-            // return original value.
-            return instance.append(component);
+            return value;
         }
     }
 

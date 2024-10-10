@@ -176,10 +176,14 @@ dependencies {
     shade 'com.fasterxml.jackson.core:jackson-databind:2.13.4'
     shade 'com.fasterxml.jackson.core:jackson-annotations:2.13.4'
 
+    // Mixin Extras
+    library 'io.github.llamalad7:mixinextras-common:0.4.1'
+    annotationProcessor 'io.github.llamalad7:mixinextras-common:0.4.1'
+    shade 'io.github.llamalad7:mixinextras-common:0.4.1'
+
     // Curseforge mod dependencies
     implementation fg.deobf("iskallia.vault:the_vault-3434:3434")
 //    implementation fg.deobf("curse.maven:vault-hunters-official-mod-458203:${vault_hunters_version}")
-
 
 //    Dependencies for Runtime Debug
     implementation fg.deobf("curse.maven:cooking-for-blockheads-231484:4065856")
@@ -247,7 +251,12 @@ tasks.withType(JavaCompile).configureEach {
 
 shadowJar {
     configurations = [project.configurations.shade]
-    relocate 'com.fasterxml.jackson', 'shadowed.com.fasterxml.jackson'
+
+    exclude('META-INF/services/**')
+    relocate 'com.fasterxml', 'lv.id.bonne.shadowed.fasterxml'
+
+    relocate("com.llamalad7", "lv.id.bonne.shadowed.llamalad7")
+    mergeServiceFiles() // Very important!
 }
 
 reobf {
