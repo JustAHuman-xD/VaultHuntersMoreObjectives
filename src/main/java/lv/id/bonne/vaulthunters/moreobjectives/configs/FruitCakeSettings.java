@@ -9,9 +9,12 @@ package lv.id.bonne.vaulthunters.moreobjectives.configs;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 import iskallia.vault.VaultMod;
@@ -67,6 +70,16 @@ public class FruitCakeSettings
         this.fruits.add(new Fruit("Sour Orange", VaultMod.id("sour_orange"), 1200, 0.0191f));
         this.fruits.add(new Fruit("Star Fruit", VaultMod.id("star_fruit"), 1800, 0.0085f));
         this.fruits.add(new Fruit("Mystic Pear", VaultMod.id("mystic_pear"), 6000, 0.0008f));
+
+        if (this.memberPunishments == null)
+        {
+            this.memberPunishments = new TreeMap<>();
+        }
+
+        this.memberPunishments.clear();
+
+        this.memberPunishments.put(30, new ArrayList<>(List.of("Star Fruit")));
+        this.memberPunishments.put(32, new ArrayList<>(List.of("Star Fruit, Mango")));
     }
 
 
@@ -96,6 +109,11 @@ public class FruitCakeSettings
             this.fruits = new ArrayList<>();
         }
 
+        if (this.memberPunishments == null)
+        {
+            this.memberPunishments = new TreeMap<>();
+        }
+
         return updated;
     }
 
@@ -105,8 +123,35 @@ public class FruitCakeSettings
      *
      * @return The fruit chance map.
      */
-    public TreeMap<Float, Fruit> getFruitChances()
+    public TreeMap<Float, Fruit> getFruitChances(int memberCount)
     {
+        if (this.memberPunishments == null)
+        {
+            this.memberPunishments = new TreeMap<>();
+        }
+
+        Map.Entry<Integer, List<String>> punishment = this.memberPunishments.floorEntry(memberCount);
+
+        if (punishment != null)
+        {
+            TreeMap<Float, Fruit> returnMap = new TreeMap<>();
+
+            List<Fruit> correctedFruitList = this.fruits.stream().
+                filter(fruit -> !punishment.getValue().contains(fruit.getName())).
+                toList();
+
+            float totalChance = (float) correctedFruitList.stream().mapToDouble(Fruit::getChance).sum();
+            float fruitChance = 0;
+
+            for (Fruit fruit : correctedFruitList)
+            {
+                fruitChance += (fruit.chance / totalChance);
+                returnMap.put(fruitChance, fruit);
+            }
+
+            return returnMap;
+        }
+
         if (this.fruitMap == null)
         {
             // Repopulate fruit map
@@ -156,6 +201,17 @@ public class FruitCakeSettings
     public List<Configuration.ModifierCounter> getStartModifiers()
     {
         return this.startModifiers;
+    }
+
+
+    /**
+     * Gets member punishments.
+     *
+     * @return the member punishments
+     */
+    public TreeMap<Integer, List<String>> getMemberPunishments()
+    {
+        return this.memberPunishments;
     }
 
 
@@ -284,6 +340,20 @@ public class FruitCakeSettings
     @JsonComment(" - Star Fruit with icon the_vault:star_fruit, time added 1800 and 0.0085 chance to spawn.")
     @JsonComment(" - Mystic Pear with icon the_vault:mystic_pear, time added 6000 and 0.0008 chance to spawn.")
     private List<Fruit> fruits;
+
+
+    @JsonProperty("member_count_punishments")
+    @JsonSetter(nulls = Nulls.SKIP)
+    @JsonComment("This map allows to define list of fruits that are disabled if you have more then X players in vault.")
+    @JsonComment("You can define it as you want, but you need to keep fruit names the same here.")
+    @JsonComment("Blocking fruit will increase chance to have other fruits instead.")
+    @JsonComment("The default just shows the way how it can be added.")
+    @JsonComment("  The number <30> shows on how many vault runners it will be triggered.")
+    @JsonComment("  The list of names are the exact you defined in `Fruit` list.")
+    @JsonComment("  The fruits are removed from defined and all next levels.")
+    @JsonComment("  In default setting 30 and 31 vault runners will not get Star Fruit, but 32 and more runners")
+    @JsonComment("  will not get Star Fruit and Mangos. Bellow 30 vault runners will have all fruits.")
+    private TreeMap<Integer, List<String>> memberPunishments;
 
     /**
      * This tree map allows getting fruits by their chance value.

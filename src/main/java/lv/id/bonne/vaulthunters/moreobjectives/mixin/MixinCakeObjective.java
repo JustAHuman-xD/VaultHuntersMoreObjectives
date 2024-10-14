@@ -31,6 +31,7 @@ import iskallia.vault.core.vault.player.ClassicListenersLogic;
 import iskallia.vault.core.vault.player.Listeners;
 import iskallia.vault.core.vault.time.modifier.ModifierExtension;
 import iskallia.vault.core.world.storage.VirtualWorld;
+import iskallia.vault.world.data.ServerVaults;
 import lv.id.bonne.vaulthunters.moreobjectives.MoreObjectivesMod;
 import lv.id.bonne.vaulthunters.moreobjectives.configs.Configuration;
 import lv.id.bonne.vaulthunters.moreobjectives.configs.FruitCakeSettings;
@@ -150,8 +151,14 @@ public abstract class MixinCakeObjective
 
         if (cakeDataForDimension.isFruitCake())
         {
+            int memberCount = ServerVaults.get(world).
+                flatMap(vault -> vault.getOptional(Vault.STATS)).
+                map(stats -> stats.getMap().size()).
+                orElse(0);
+
             Map.Entry<Float, FruitCakeSettings.Fruit> floatFruitEntry =
-                MoreObjectivesMod.CONFIGURATION.getFruitCakeSettings().getFruitChances().higherEntry(random.nextFloat());
+                MoreObjectivesMod.CONFIGURATION.getFruitCakeSettings().getFruitChances(memberCount).
+                    higherEntry(random.nextFloat());
 
             if (floatFruitEntry != null)
             {
