@@ -148,8 +148,23 @@ public class CommentGeneration
         {
             jsonWithComments.append(indent);
 
-            if (isNotPrimitive(item))
+            if (item instanceof Collection<?> collection2)
             {
+                // Handle Collection (List, Set)
+                jsonWithComments.append("[\n");
+                serializeCollection(collection2, jsonWithComments, mapper, indentLevel + 1);
+                jsonWithComments.append(indent).append("]");
+            }
+            else if (item instanceof Map<?, ?> map)
+            {
+                // Handle Map
+                jsonWithComments.append("{\n");
+                serializeMap(map, jsonWithComments, mapper, indentLevel + 1);
+                jsonWithComments.append(indent).append("}");
+            }
+            else if (isNotPrimitive(item))
+            {
+                // Serialize object as recursive object.
                 jsonWithComments.append("{\n");
                 serializeObjectWithComments(item, jsonWithComments, mapper, indentLevel + 1);
                 jsonWithComments.append("\n");
@@ -157,6 +172,7 @@ public class CommentGeneration
             }
             else
             {
+                // If the field is a primitive or String, serialize directly
                 jsonWithComments.append(mapper.writeValueAsString(item));
             }
 
@@ -187,20 +203,39 @@ public class CommentGeneration
             jsonWithComments.append(indent).append("\"").append(entry.getKey()).append("\": ");
             Object value = entry.getValue();
 
-            if (isNotPrimitive(value))
+            if (value instanceof Collection<?> collection)
             {
+                // Handle Collection (List, Set)
+                jsonWithComments.append("[\n");
+                serializeCollection(collection, jsonWithComments, mapper, indentLevel + 1);
+                jsonWithComments.append(indent).append("]");
+            }
+            else if (value instanceof Map<?, ?> map2)
+            {
+                // Handle Map
+                jsonWithComments.append("{\n");
+                serializeMap(map2, jsonWithComments, mapper, indentLevel + 1);
+                jsonWithComments.append(indent).append("}");
+            }
+            else if (isNotPrimitive(value))
+            {
+                // Serialize object as recursive object.
                 jsonWithComments.append("{\n");
                 serializeObjectWithComments(value, jsonWithComments, mapper, indentLevel + 1);
+                jsonWithComments.append("\n");
                 jsonWithComments.append(indent).append("}");
             }
             else
             {
+                // If the field is a primitive or String, serialize directly
                 jsonWithComments.append(mapper.writeValueAsString(value));
             }
+
             if (++count < map.size())
             {
                 jsonWithComments.append(",");
             }
+
             jsonWithComments.append("\n");
         }
     }
