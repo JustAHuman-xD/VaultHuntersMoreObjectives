@@ -8,6 +8,8 @@ package lv.id.bonne.vaulthunters.moreobjectives.configs;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,6 +57,15 @@ public class CowVaultSettings
 
         this.theme = VaultMod.id("classic_vault_chaos");
         this.objective = "";
+
+        if (this.extraModifiers == null)
+        {
+            this.extraModifiers = new ArrayList<>();
+        }
+
+        this.extraModifiers.clear();
+
+        this.extraModifiers.add(new Configuration.ModifierCounter(VaultMod.id("bronze_nuke"), 1));
     }
 
 
@@ -82,6 +93,11 @@ public class CowVaultSettings
         {
             updated = true;
             this.objective = "";
+        }
+
+        if (this.extraModifiers == null)
+        {
+            this.extraModifiers = new ArrayList<>();
         }
 
         return updated;
@@ -135,6 +151,17 @@ public class CowVaultSettings
     }
 
 
+    /**
+     * Gets extra modifiers.
+     *
+     * @return the extra modifiers
+     */
+    public List<Configuration.ModifierCounter> getExtraModifiers()
+    {
+        return this.extraModifiers;
+    }
+
+
     @JsonProperty("theme")
     @JsonSerialize(using = ResourceLocationSerializer.class)
     @JsonComment("This allows to define in which 'theme' cow vaults can be triggered.")
@@ -147,6 +174,13 @@ public class CowVaultSettings
     @JsonComment("This allows to define in which 'objective' cow vaults can be triggered.")
     @JsonComment("The default value `\"\"` allows it to generate in all objectives.")
     private String objective;
+
+
+    @JsonProperty("extra_modifiers")
+    @JsonSetter(nulls = Nulls.SKIP)
+    @JsonComment("This allows to define extra modifiers that are added to the vault when cow vault is triggered.")
+    @JsonComment("The default value coin explosion.")
+    private List<Configuration.ModifierCounter> extraModifiers;
 
     @JsonProperty("cow_vault_triggers")
     @JsonComment("The list of modifiers that triggers cow vaults.")

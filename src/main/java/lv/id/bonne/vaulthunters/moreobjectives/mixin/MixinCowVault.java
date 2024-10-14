@@ -17,8 +17,10 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import iskallia.vault.VaultMod;
+import iskallia.vault.core.random.ChunkRandom;
 import iskallia.vault.core.vault.Vault;
 import iskallia.vault.core.vault.WorldManager;
+import iskallia.vault.core.vault.modifier.registry.VaultModifierRegistry;
 import iskallia.vault.core.vault.modifier.spi.VaultModifier;
 import iskallia.vault.core.vault.objective.Objectives;
 import iskallia.vault.core.world.storage.VirtualWorld;
@@ -104,6 +106,16 @@ public abstract class MixinCowVault
                 // Change to CowMobLogic
                 ((WorldManager) (Object) this).
                     setIfPresent(WorldManager.MOB_LOGIC, new CowMobLogic());
+
+                cowVaultSettings.getExtraModifiers().forEach(extra ->
+                {
+                    VaultModifierRegistry.getOpt(extra.modifier()).ifPresentOrElse(extraModifier ->
+                    {
+                        modifiers.addModifier(extraModifier, extra.count(), false, ChunkRandom.any());
+                        MoreObjectivesMod.LOGGER.debug("Adding extra modifier: " + extra.modifier().toString());
+                    },
+                    () -> MoreObjectivesMod.LOGGER.debug("Could not find modifier: " + extra.modifier().toString()));
+                });
             }
             else
             {
