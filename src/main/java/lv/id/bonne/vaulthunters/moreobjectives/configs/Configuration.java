@@ -112,6 +112,33 @@ public class Configuration
 
 
     /**
+     * Reload config configuration.
+     *
+     * @return the configuration
+     */
+    public Configuration reloadConfig()
+    {
+        try
+        {
+            Configuration configuration = this.mapper.readValue(this.getConfigFile(), this.getClass());
+
+            if (configuration.validate())
+            {
+                MoreObjectivesMod.LOGGER.error("Failed to validate config.");
+                return null;
+            }
+
+            return configuration;
+        }
+        catch (IOException var2)
+        {
+            MoreObjectivesMod.LOGGER.error("Failed to read config. " + var2.getMessage());
+            return this;
+        }
+    }
+
+
+    /**
      * This method resets configs to default values.
      */
     protected void reset()

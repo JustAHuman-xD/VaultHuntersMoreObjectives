@@ -216,6 +216,16 @@ public class FruitCakeSettings
 
 
     /**
+     * This method changes chance for cake vault to spawn.
+     * @param value new chance value.
+     */
+    public void setChance(float value)
+    {
+        this.chance = value;
+    }
+
+
+    /**
      * The fruit incrementing for cake.
      */
     public static class Fruit
