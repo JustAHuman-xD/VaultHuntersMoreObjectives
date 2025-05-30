@@ -30,10 +30,9 @@ import java.util.Map;
 public abstract class MixinWorldManager {
     @Inject(method = "initServer", at = @At(value = "INVOKE", target = "Liskallia/vault/core/vault/WorldManager;ifPresent(Liskallia/vault/core/data/key/FieldKey;Ljava/util/function/Consumer;)V", ordinal = 3), remap = false)
     private void injectInitServer(VirtualWorld world, Vault vault, CallbackInfo ci) {
-        if (Configs.COW_VAULT.getTheme() != null && !Configs.COW_VAULT.getTheme().equals(cast().get(WorldManager.THEME))) {
+        if (!Configs.COW_VAULT.themeMatches(cast().get(WorldManager.THEME))) {
             return;
-        } else if (!Configs.COW_VAULT.getObjective().isEmpty() && !Configs.COW_VAULT.getObjective().equals(
-                vault.getOptional(Vault.OBJECTIVES).flatMap(objectives -> objectives.getOptional(Objectives.KEY)).orElse(null))) {
+        } else if (!Configs.COW_VAULT.objectiveMatches(vault.getOptional(Vault.OBJECTIVES).flatMap(objectives -> objectives.getOptional(Objectives.KEY)).orElse(null))) {
             return;
         }
 
@@ -47,12 +46,7 @@ public abstract class MixinWorldManager {
             if (requirements.isEmpty()) {
                 MoreObjectives.LOGGER.debug("Cow Vault Triggered. Replace Mobs with cows.");
                 cast().setIfPresent(WorldManager.MOB_LOGIC, new CowMobLogic());
-
                 for (ModifierCounter extra : Configs.COW_VAULT.getModifiers()) {
-                    if (extra.modifier() == null) {
-                        MoreObjectives.LOGGER.debug("Cow Vault has extra modifier with null ID. Skipping.");
-                        continue;
-                    }
                     modifiers.addModifier(extra.modifier(), extra.count(), false, ChunkRandom.ofInternal(vault.get(Vault.SEED)));
                     MoreObjectives.LOGGER.debug("Adding extra modifier: {}", extra.modifier());
                 }

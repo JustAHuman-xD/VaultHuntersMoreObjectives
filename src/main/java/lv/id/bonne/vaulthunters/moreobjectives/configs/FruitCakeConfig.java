@@ -11,7 +11,6 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.annotations.Expose;
 import iskallia.vault.VaultMod;
 import iskallia.vault.config.Config;
-import iskallia.vault.config.VoidCrucibleConfig;
 import iskallia.vault.core.vault.modifier.registry.VaultModifierRegistry;
 import iskallia.vault.init.ModItems;
 import iskallia.vault.item.ItemVaultFruit;
@@ -33,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class FruitCakeConfig extends Config {
     @Expose
-    private float chance = 0;
+    private float chance = 0.1f;
     @Expose
     private Map<ResourceLocation, Integer> startModifiers = new HashMap<>();
     @Expose
@@ -67,7 +66,7 @@ public class FruitCakeConfig extends Config {
             String id = entry.getKey();
             JsonObject json = entry.getValue();
 
-            String iconId = null;
+            String iconId = id;
             if (json.get("icon") instanceof JsonPrimitive serializedIcon && serializedIcon.isString()) {
                 iconId = serializedIcon.getAsString();
             }
@@ -83,17 +82,17 @@ public class FruitCakeConfig extends Config {
             }
             int ticks = json.has("ticks") ? json.get("ticks").getAsInt() : ((AccessorItemVaultFruit) icon).getExtraVaultTicks();
 
-            if (!(json.get("chance") instanceof JsonPrimitive chanceJson) || !chanceJson.isNumber()) {
-                MoreObjectives.LOGGER.warn("[FruitCakeConfig] Fruit '{}' has an invalid chance '{}', skipping", id, json.get("chance"));
+            if (!(json.get("weight") instanceof JsonPrimitive weightJson) || !weightJson.isNumber()) {
+                MoreObjectives.LOGGER.warn("[FruitCakeConfig] Fruit '{}' has an invalid weight '{}', skipping", id, json.get("weight"));
                 continue;
             }
-            float chance = chanceJson.getAsFloat();
-            if (chance <= 0) {
-                MoreObjectives.LOGGER.warn("[FruitCakeConfig] Fruit '{}' has a chance <= 0, skipping", id);
+            float weight = weightJson.getAsFloat();
+            if (weight <= 0) {
+                MoreObjectives.LOGGER.warn("[FruitCakeConfig] Fruit '{}' has a weight <= 0, skipping", id);
                 continue;
             }
 
-            this.fruitMap.put(id, new Fruit(id, icon, ticks, chance));
+            this.fruitMap.put(id, new Fruit(id, icon, ticks, weight));
         }
 
         for (Map.Entry<Integer, List<String>> entry : fruitScaling.entrySet()) {
@@ -147,11 +146,11 @@ public class FruitCakeConfig extends Config {
                 TreeMap<Float, Fruit> withPunishment = new TreeMap<>();
                 float totalChance = (float) this.fruitMap.values().stream()
                         .filter(fruit -> !punishment.getValue().contains(fruit))
-                        .mapToDouble(Fruit::chance).sum();
+                        .mapToDouble(Fruit::weight).sum();
                 float fruitChance = 0;
                 for (Fruit fruit : this.fruitMap.values()) {
                     if (!punishment.getValue().contains(fruit)) {
-                        fruitChance += (fruit.chance() / totalChance);
+                        fruitChance += (fruit.weight() / totalChance);
                         withPunishment.put(fruitChance, fruit);
                     }
                 }
@@ -161,10 +160,10 @@ public class FruitCakeConfig extends Config {
 
         return this.fruitChances.computeIfAbsent(-1, dummy -> {
             TreeMap<Float, Fruit> fruitChances = new TreeMap<>();
-            float totalChance = (float) this.fruitMap.values().stream().mapToDouble(Fruit::chance).sum();
+            float totalChance = (float) this.fruitMap.values().stream().mapToDouble(Fruit::weight).sum();
             float fruitChance = 0;
             for (Fruit fruit : this.fruitMap.values()) {
-                fruitChance += (fruit.chance() / totalChance);
+                fruitChance += (fruit.weight() / totalChance);
                 fruitChances.put(fruitChance, fruit);
             }
             return fruitChances;
