@@ -9,7 +9,7 @@ version = "${mod_version}"
 displayName = "${mod_name}"
 displayURL="https://github.com/JustAHuman-xD/VaultHuntersMoreObjectives"
 logoFile="moreobjectives.png"
-authors = "${mod_authors}
+authors = "${mod_authors}"
 description = '''${mod_description}'''
 
 [[dependencies."${mod_id}"]]
