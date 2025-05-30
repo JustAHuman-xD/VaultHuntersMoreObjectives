@@ -4,12 +4,13 @@
   "package": "lv.id.bonne.vaulthunters.moreobjectives.mixin",
   "compatibilityLevel": "JAVA_17",
   "refmap": "moreobjectives.refmap.json",
-  "plugin": "lv.id.bonne.vaulthunters.moreobjectives.VaultHuntersIntegrationModConfiguration",
   "mixins": [
-    "MixinCakeObjective",
-    "MixinCakeTextChange",
-    "MixinCowBaseSpawnerTileEntity",
-    "MixinCowSpawnerAction",
-    "MixinCowVault"
+    "MixinModConfigs",
+    "cow_vault.MixinBaseSpawnerTileEntity",
+    "cow_vault.MixinSpawnerAction",
+    "cow_vault.MixinWorldManager",
+    "fruit_cake.AccessorItemVaultFruit",
+    "fruit_cake.MixinCakeObjective",
+    "fruit_cake.MixinClassicListenersLogic"
   ]
 }
